@@ -1,120 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>x0SecDefense | Cyber Intelligence & Automation</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>oSec Defense Nexus</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0f1115;
-      color: #eee;
-      line-height: 1.6;
+      padding: 0;
+      background: black;
+      color: #00ffcc;
+      font-family: 'Courier New', Courier, monospace;
+      height: 100%;
+      overflow: hidden;
     }
-
-    header {
-      background: linear-gradient(135deg, #00ffcc, #0077ff);
-      padding: 60px 20px;
-      text-align: center;
-      color: #000;
-    }
-
-    header h1 {
-      font-size: 3rem;
-      margin-bottom: 0.2em;
-    }
-
-    header p {
-      font-size: 1.2rem;
-      margin: 0;
-    }
-
-    section {
-      padding: 40px 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-
-    h2 {
-      color: #00ffff;
-      border-bottom: 1px solid #00ffff33;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
-    }
-
-    .ghostmint, .vault, .terminal {
-      background-color: #1a1f26;
+    #terminal {
       padding: 20px;
-      border-radius: 10px;
-      margin-top: 30px;
-      box-shadow: 0 0 20px #00ffcc33;
+      height: 100%;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      box-sizing: border-box;
+      background: linear-gradient(135deg, #001111, #000000);
     }
-
-    .terminal p {
-      font-family: monospace;
+    .input-line {
+      display: flex;
+      margin-top: 10px;
+    }
+    .prompt {
       color: #00ffcc;
     }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      background-color: #101216;
-      font-size: 0.9rem;
-      color: #777;
+    input {
+      background: black;
+      color: #00ffcc;
+      border: none;
+      outline: none;
+      font: inherit;
+      width: 100%;
     }
-
-    a {
+    .startup {
       color: #00ffff;
-      text-decoration: none;
+      animation: flicker 2s infinite alternate;
+    }
+    @keyframes flicker {
+      from { opacity: 1; }
+      to { opacity: 0.6; }
+    }
+    .hidden {
+      display: none;
+    }
+    .vanish-toggle {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 12px;
+      color: #ccc;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>x0SecDefense</h1>
-    <p>Cyber Intelligence. Financial Automation. Stealth Infrastructure.</p>
-  </header>
+  <div class="vanish-toggle" onclick="toggleVanish()">VANISH MODE: <span id="vanish-status">OFF</span></div>
+  <div id="terminal">
+    <div class="startup">Initializing oSec Defense Core...</div>
+    <div class="startup">Injecting GhostMint Engine...</div>
+    <div class="startup">Hydra LINK established ✅</div>
+    <div class="startup">[ACCESS GRANTED] Operator x0secdefense authenticated</div>
+    <div class="startup">Welcome to the oSec Defense Terminal. Type 'help' to begin.</div>
+    <div class="input-line"><span class="prompt">x0secdefense&gt;</span><input id="cmd" autofocus onkeydown="handleCommand(event)"></div>
+  </div>
 
-  <section>
-    <h2>About Us</h2>
-    <p>
-      At x0SecDefense, we engineer elite cybersecurity and automation frameworks built for high-frequency financial operations and modern threat landscapes. Our infrastructure is hardened, anonymized, and tuned for global resilience.
-    </p>
+  <script>
+    const terminal = document.getElementById('terminal');
+    const input = document.getElementById('cmd');
+    const vanishStatus = document.getElementById('vanish-status');
+    let vanishMode = false;
 
-    <h2>Core Specializations</h2>
-    <ul>
-      <li>💻 Hardened System Architecture</li>
-      <li>🛡️ Zero-Trust & AI-Based Defense Systems</li>
-      <li>🔐 Autonomous Vault Infrastructure</li>
-      <li>📊 Financial Intelligence Automation</li>
-      <li>🌍 Cross-border Transaction Resilience</li>
-    </ul>
+    function handleCommand(e) {
+      if (e.key === 'Enter') {
+        const val = input.value.trim();
+        const out = document.createElement('div');
+        out.textContent = `> ${val}`;
+        terminal.insertBefore(out, input.parentElement);
 
-    <div class="ghostmint">
-      <h2>GhostMint Status</h2>
-      <p>GhostMint-α Engine: <strong>ACTIVE</strong></p>
-      <p>Last income ping: <em>19 minutes ago</em></p>
-      <p>Total harvested (simulated): <strong>£3.2M+</strong></p>
-    </div>
+        let response = '';
+        switch (val.toLowerCase()) {
+          case 'help':
+            response = `
+Available Commands:
+- help: Show this list
+- status: System health check
+- ghostmint: Trigger income node scan
+- vanish: Toggle VANISH protocol
+- clear: Clear terminal
+- submit: Send encrypted payload
+- live: Toggle LIVE/SIM Mode
+- exit: Lockdown interface`;
+            break;
+          case 'status':
+            response = '[OK] All systems operational. Defense net active.';
+            break;
+          case 'ghostmint':
+            response = '[GHOSTMINT] Running recon sweep... passive income signals detected.';
+            break;
+          case 'vanish':
+            toggleVanish();
+            response = `[VANISH] Mode now: ${vanishMode ? 'ENABLED' : 'DISABLED'}`;
+            break;
+          case 'clear':
+            clearTerminal();
+            return;
+          case 'submit':
+            response = '[SUBMIT] Form payload sent (⚠ link handler pending)';
+            break;
+          case 'live':
+            response = '[MODE] LIVE mode activated — all actions are real.';
+            break;
+          case 'exit':
+            response = '[LOCKDOWN] Session ended. oSecBot standing by.';
+            break;
+          default:
+            response = '[ERROR] Unknown command. Type "help"';
+        }
 
-    <div class="vault">
-      <h2>Encrypted Vault</h2>
-      <p>Secure Operator Storage Initialized. Access locked with multi-key Tier 7 biometric logic.</p>
-    </div>
+        const r = document.createElement('div');
+        r.textContent = response;
+        terminal.insertBefore(r, input.parentElement);
+        input.value = '';
+        scrollToBottom();
+      }
+    }
 
-    <div class="terminal">
-      <h2>Operator Console</h2>
-      <p>> system scan --stealth</p>
-      <p>> oSecBot linked successfully to domain</p>
-      <p>> status: LIVE / VANISH READY</p>
-      <p>> route: /hydra --launch</p>
-    </div>
-  </section>
+    function toggleVanish() {
+      vanishMode = !vanishMode;
+      vanishStatus.textContent = vanishMode ? 'ON' : 'OFF';
+    }
 
-  <footer>
-    <p>&copy; 2025 x0SecDefense.xyz | Email: <a href="mailto:x0sec@x0secdefense.xyz">x0sec@x0secdefense.xyz</a></p>
-    <p>Deployed via Cloudflare & GitHub | Engine: oSecBot Infinity / Hydra Link</p>
-  </footer>
+    function clearTerminal() {
+      const all = Array.from(terminal.children);
+      all.forEach(el => {
+        if (!el.classList.contains('input-line') && !el.classList.contains('vanish-toggle')) {
+          terminal.removeChild(el);
+        }
+      });
+    }
+
+    function scrollToBottom() {
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+  </script>
 </body>
 </html>
