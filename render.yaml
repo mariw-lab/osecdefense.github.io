@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: oseccyberdefense-terminal
+    name: x0Sec_Admin
     env: python
-    region: frankfurt
-    plan: free
     buildCommand: ""
-    startCommand: python app.py
-    autoDeploy: true
+    startCommand: "python app.py"
+    plan: free
+    repo: https://github.com/YOUR_USERNAME/YOUR_REPO
+    branch: main
