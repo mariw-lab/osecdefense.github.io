@@ -37,10 +37,6 @@
       cursor: pointer;
       font-weight: bold;
     }
-    #liveModeToggle {
-      margin-left: 10px;
-      transform: scale(1.5);
-    }
     label {
       font-size: 14px;
       color: #00ffff;
@@ -60,15 +56,13 @@ Hydra LINK established ✅
 <span style="color:#00ffcc">[ACCESS GRANTED]</span> Operator <b>@osecdefense</b> authenticated
 
 Welcome to the oSec Defense Terminal. Type <span style="color: #00ffff">'help'</span> to begin.
-
-> </pre>
+</pre>
   </div>
   <form onsubmit="return runCommand();">
     <span style="color:#00ffcc">x0secdefense&gt; </span><input type="text" id="cmdInput" autofocus autocomplete="off">
   </form>
 </div>
 
-<label><input type="checkbox" id="liveModeToggle"> LIVE Mode</label>
 <button id="logBtn" onclick="downloadLog()">Download Logs</button>
 
 <script>
@@ -77,10 +71,7 @@ Welcome to the oSec Defense Terminal. Type <span style="color: #00ffff">'help'</
   let history = [];
   let histIndex = -1;
 
-  // Focus on input even after clicking outside
-  document.addEventListener('click', () => {
-    input.focus();
-  });
+  document.addEventListener('click', () => { input.focus(); });
 
   input.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowUp') {
@@ -96,68 +87,70 @@ Welcome to the oSec Defense Terminal. Type <span style="color: #00ffff">'help'</
 
   function runCommand() {
     const command = input.value.trim();
-    const liveMode = document.getElementById('liveModeToggle').checked;
     if (command) {
       history.push(command);
       histIndex = history.length;
     }
 
     appendTyped(`x0secdefense> ${command}\n`, () => {
-      handleCommand(command, liveMode);
+      handleCommand(command);
     });
 
     input.value = "";
     return false;
   }
 
-  function handleCommand(command, liveMode) {
+  function handleCommand(command) {
     let result = "";
-
     switch (command.toLowerCase()) {
       case "help":
         result = `
 <span style="color:#00ffff">Available Commands:</span>
-- help                → show this menu
-- balance             → show earnings balance
-- payout              → trigger HydraChain Final
-- vanish              → engage stealth wipe (offline)
-- reroute             → re-initiate mixer logic
-- status              → check payout split status
-- exit                → shut down session`;
+• help → show this menu
+• balance → show earnings balance
+• payout → trigger HydraChain Final
+• vanish → engage stealth wipe (offline)
+• reroute → re-initiate mixer logic
+• status → check payout split status
+• exit → shut down session`;
         break;
+
       case "balance":
-        result = `<span style="color:#00ff88">💰 Current Earnings Balance:</span> $3,200,000.00`;
+        result = "<span style='color:#00ff88'>💰 Current Earnings Balance:</span> $3,200,000.00";
         break;
+
       case "payout":
         const code = prompt("🔐 Enter 4-digit operator trigger:");
         if (code === "2498") {
-          if (liveMode) {
-            result = `<span style="color:#00ff88">[🔓] Payout code verified.</span>
+          result = `
+<span style="color:#00ff88">[🔓] Payout code verified.</span>
 [🔄] Routing HydraChain payouts...
-  → 40% → Wise Business (GBP Transfer): <b>$1,280,000.00</b>
-  → 60% → Cold Storage (XMR via Mixer): <b>$1,920,000.00</b>
+→ 40% → Wise Business (GBP Transfer): <b>$1,280,000.00</b>
+→ 60% → Cold Storage (XMR via Mixer): <b>$1,920,000.00</b>
 <span style="color:#00ff88">[✅] Routing instructions complete.</span>`;
-          } else {
-            result = `<span style="color:#ffaa00">[SIMULATION MODE]</span> Payout simulated successfully. No real funds moved.`;
-          }
         } else {
-          result = `<span style="color:#ff4444">[❌] Invalid trigger. Access denied.</span>`;
+          result = "<span style='color:#ff4444'>[❌] Invalid trigger. Access denied.</span>";
         }
         break;
+
       case "status":
-        result = `Split Config: <span style="color:#00ffff">40%</span> Wise GBP • <span style="color:#00ffff">60%</span> Cold Storage (XMR)`;
+        result = "Split Config: <span style='color:#00ffff'>40%</span> Wise GBP • <span style='color:#00ffff'>60%</span> Cold Storage (XMR)";
         break;
+
       case "vanish":
-        result = `<span style="color:#ff0077">[🧼] VANISH Protocol armed. Logs wiping...</span>`;
+        result = "<span style='color:#ff0077'>[🧼] VANISH Protocol armed. Logs wiping...</span>";
         break;
+
       case "reroute":
-        result = `[🔄] Mixer logic reinitialized. Stealth circuits online.`;
+        result = "[🔄] Mixer logic reinitialized. Stealth circuits online.";
         break;
+
       case "exit":
-        result = `<span style="color:#888888">[🔒] Session terminated. Goodbye, Operator.</span>`;
+        result = "<span style='color:#888888'>[🔒] Session terminated. Goodbye, Operator.</span>";
         break;
+
       default:
-        result = `<span style="color:#ff4444">[ERROR]</span> Unknown command: '${command}' — try '<span style="color:#00ffff">help</span>'`;
+        result = `<span style='color:#ff4444'>[ERROR]</span> Unknown command: '${command}' — try '<span style="color:#00ffff">help</span>'`;
     }
 
     appendTyped(result + "\n\n");
@@ -174,7 +167,7 @@ Welcome to the oSec Defense Terminal. Type <span style="color: #00ffff">'help'</
         clearInterval(interval);
         if (callback) callback();
       }
-    }, 10); // typing speed
+    }, 10);
   }
 
   function downloadLog() {
