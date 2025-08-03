@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>oSec Defense Terminal</title>
   <style>
     body {
@@ -44,68 +44,62 @@
   </style>
 </head>
 <body>
-
-<div id="terminal">
-  <div id="output">
-    <pre>
+  <div id="terminal">
+    <div id="output">
+      <pre>
 Initializing oSec Defense Core...
 Injecting GhostMint Engine...
-
 Hydra LINK established ✅
-
 <span style="color:#00ffcc">[ACCESS GRANTED]</span> Operator <b>@osecdefense</b> authenticated
-
-Welcome to the oSec Defense Terminal. Type <span style="color: #00ffff">'help'</span> to begin.
+Welcome to the oSec Defense Terminal.
+Type <span style="color: #00ffff">'help'</span> to begin.
 </pre>
+    </div>
+    <form onsubmit="return runCommand();">
+      <span style="color:#00ffcc">x0secdefense&gt; </span><input type="text" id="cmdInput" autofocus autocomplete="off">
+    </form>
   </div>
-  <form onsubmit="return runCommand();">
-    <span style="color:#00ffcc">x0secdefense&gt; </span><input type="text" id="cmdInput" autofocus autocomplete="off">
-  </form>
-</div>
+  <button id="logBtn" onclick="downloadLog()">Download Logs</button>
 
-<button id="logBtn" onclick="downloadLog()">Download Logs</button>
+  <script>
+    const output = document.getElementById("output");
+    const input = document.getElementById("cmdInput");
+    let history = [];
+    let histIndex = -1;
+    let balance = 3200000;
 
-<script>
-  const output = document.getElementById("output");
-  const input = document.getElementById("cmdInput");
-  let history = [];
-  let histIndex = -1;
+    document.addEventListener('click', () => { input.focus(); });
 
-  document.addEventListener('click', () => { input.focus(); });
-
-  input.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowUp') {
-      if (histIndex > 0) histIndex--;
-      input.value = history[histIndex] || '';
-      e.preventDefault();
-    } else if (e.key === 'ArrowDown') {
-      if (histIndex < history.length - 1) histIndex++;
-      input.value = history[histIndex] || '';
-      e.preventDefault();
-    }
-  });
-
-  function runCommand() {
-    const command = input.value.trim();
-    if (command) {
-      history.push(command);
-      histIndex = history.length;
-    }
-
-    appendTyped(`x0secdefense> ${command}\n`, () => {
-      handleCommand(command);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowUp') {
+        if (histIndex > 0) histIndex--;
+        input.value = history[histIndex] || '';
+        e.preventDefault();
+      } else if (e.key === 'ArrowDown') {
+        if (histIndex < history.length - 1) histIndex++;
+        input.value = history[histIndex] || '';
+        e.preventDefault();
+      }
     });
 
-    input.value = "";
-    return false;
-  }
+    function runCommand() {
+      const command = input.value.trim();
+      if (command) {
+        history.push(command);
+        histIndex = history.length;
+        appendTyped(`x0secdefense> ${command}\n`, () => {
+          handleCommand(command);
+        });
+      }
+      input.value = "";
+      return false;
+    }
 
-  function handleCommand(command) {
-    let result = "";
-    switch (command.toLowerCase()) {
-      case "help":
-        result = `
-<span style="color:#00ffff">Available Commands:</span>
+    function handleCommand(command) {
+      let result = "";
+      switch (command.toLowerCase()) {
+        case "help":
+          result = `<span style="color:#00ffff">Available Commands:</span>
 • help → show this menu
 • balance → show earnings balance
 • payout → trigger HydraChain Final
@@ -113,72 +107,93 @@ Welcome to the oSec Defense Terminal. Type <span style="color: #00ffff">'help'</
 • reroute → re-initiate mixer logic
 • status → check payout split status
 • exit → shut down session`;
-        break;
+          break;
 
-      case "balance":
-        result = "<span style='color:#00ff88'>💰 Current Earnings Balance:</span> $3,200,000.00";
-        break;
+        case "balance":
+          result = `<span style='color:#00ff88'>💰 Current Earnings Balance:</span> $${balance.toLocaleString("en-US")}.00`;
+          break;
 
-      case "payout":
-        const code = prompt("🔐 Enter 4-digit operator trigger:");
-        if (code === "2498") {
-          result = `
-<span style="color:#00ff88">[🔓] Payout code verified.</span>
-[🔄] Routing HydraChain payouts...
-→ 40% → Wise Business (GBP Transfer): <b>$1,280,000.00</b>
-→ 60% → Cold Storage (XMR via Mixer): <b>$1,920,000.00</b>
-<span style="color:#00ff88">[✅] Routing instructions complete.</span>`;
-        } else {
-          result = "<span style='color:#ff4444'>[❌] Invalid trigger. Access denied.</span>";
-        }
-        break;
+        case "payout":
+  const code = prompt("🔐 Enter 4-digit operator trigger:");
+  if (code === "2498") {
+    result = `<span style="color:#00ff88">[🔓] Payout code verified.</span><br>[🔄] Routing HydraChain payouts...<br> → Wise Business (GBP Transfer): <b>$${(balance * 0.4).toLocaleString("en-US")}</b><br> → Cold Storage (XMR via Mixer): <b>$${(balance * 0.6).toLocaleString("en-US")}</b><br><span style="color:#00ff88">[✅] Routing instructions complete.</span>`;
+    balance = 0;
 
-      case "status":
-        result = "Split Config: <span style='color:#00ffff'>40%</span> Wise GBP • <span style='color:#00ffff'>60%</span> Cold Storage (XMR)";
-        break;
+    // LIVE CALL TO BACKEND
+    fetch("https://x0sec-admin.onrender.com/trigger_payout?code=2498", {
+      method: "POST"
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log("[Hydra Admin] LIVE payout backend hit:", data);
+    })
+    .catch(error => {
+      console.error("[Hydra Admin] LIVE backend error:", error);
+    });
 
-      case "vanish":
-        result = "<span style='color:#ff0077'>[🧼] VANISH Protocol armed. Logs wiping...</span>";
-        break;
+  } else {
+    result = "<span style='color:#ff4444'>[❌] Invalid trigger. Access denied.</span>";
+  }
+  break;
 
-      case "reroute":
-        result = "[🔄] Mixer logic reinitialized. Stealth circuits online.";
-        break;
 
-      case "exit":
-        result = "<span style='color:#888888'>[🔒] Session terminated. Goodbye, Operator.</span>";
-        break;
+        case "status":
+          result = "Split Config: <span style='color:#00ffff'>40%</span> Wise GBP • <span style='color:#00ffff'>60%</span> Cold Storage (XMR)";
+          break;
 
-      default:
-        result = `<span style='color:#ff4444'>[ERROR]</span> Unknown command: '${command}' — try '<span style="color:#00ffff">help</span>'`;
+        case "vanish":
+          result = "<span style='color:#ff0077'>[🧼] VANISH Protocol armed. Logs wiping...</span>";
+          // Optional: Add log clearing logic
+          break;
+
+        case "reroute":
+          result = "[🔄] Mixer logic reinitialized. Stealth circuits online.";
+          break;
+
+        case "exit":
+          result = "<span style='color:#888888'>[🔒] Session terminated. Goodbye, Operator.</span>";
+          break;
+
+        default:
+          result = `<span style='color:#ff4444'>[ERROR]</span> Unknown command: '${command}' — try '<span style="color:#00ffff">help</span>'`;
+      }
+      appendTyped(result + "\n\n");
     }
 
-    appendTyped(result + "\n\n");
-  }
+    function appendTyped(text, callback) {
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < text.length) {
+          output.innerHTML += text.charAt(i);
+          output.scrollTop = output.scrollHeight;
+          i++;
+        } else {
+          clearInterval(interval);
+          if (callback) callback();
+        }
+      }, 10);
+    }
 
-  function appendTyped(text, callback) {
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < text.length) {
-        output.innerHTML += text.charAt(i);
-        output.scrollTop = output.scrollHeight;
-        i++;
-      } else {
-        clearInterval(interval);
-        if (callback) callback();
+    function downloadLog() {
+      const text = output.innerText;
+      const blob = new Blob([text], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "osec_terminal_log.txt";
+      link.click();
+    }
+
+    // 💸 Passive injection engine (LIVE-READY if backend tied)
+    setInterval(() => {
+      if (balance > 0) {
+        balance += 250000;
+        appendTyped("[GhostMint 💸] Injected $250,000.00\n\n");
+
+        // 🔗 Optional: call backend to reflect injection
+        // fetch("https://yourdomain.com/ghostmint_inject", { method: "POST" })
+
       }
-    }, 10);
-  }
-
-  function downloadLog() {
-    const text = output.innerText;
-    const blob = new Blob([text], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "osec_terminal_log.txt";
-    link.click();
-  }
-</script>
-
+    }, 60000); // Every 1 min, adjustable
+  </script>
 </body>
 </html>
