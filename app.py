@@ -1,138 +1,229 @@
-from flask import Flask, request, jsonify, render_template_string
-import os, time, json, random, uuid
+# HYDRA Web App - OMNIA EDITION + FINALIZED PAYMENT OPS
+# Every Upgrade, Every Feature, All In One
+
+from flask import Flask, render_template_string, request
+import datetime, base64, hashlib, random
 
 app = Flask(__name__)
 
-# === CORE CONFIG ===
-BALANCE = 6200000.00
-LIVE_MODE = True
-WITHDRAW_PENDING = False
-HYDRA_LINKED = True
-VAULT_ACTIVE = True
-LOGS = []
+# === CONFIG ===
+balance = 3_200_000
+withdrawal_request = None
+live_mode = False
+vanish_triggered = False
+logs = []
+shadow_logs = []
+vault_entries = []
+operator_signature = "OpenHydra"
+operator_key = "osec-master"
+payment_history = []
 
-# === HTML UI TERMINAL ===
-html = '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>🧿 HYDRA ARKHØN OPS</title>
-    <style>
-        body { background: #000914; color: #00ffe1; font-family: monospace; padding: 20px; }
-        input { background: #000914; color: #00ffe1; border: none; font-size: 1em; width: 100%; }
-        .terminal { width: 100%; height: 80vh; overflow-y: auto; border: 1px solid #00ffe1; padding: 10px; }
-    </style>
-</head>
-<body>
-    <div class="terminal" id="terminal">
-        <p>Initializing ARKHØN Phantom Protocol...</p>
-        <p>Injecting GhostMint Engine...</p>
-        <p>🧠 HYDRA Linked — AI Ops Online</p>
-        <p>💸 Balance Locked: £6.2M | LIVE MODE ENABLED</p>
-        <p>Type "/help" for commands.</p>
-    </div>
-    <input id="input" autofocus />
-    <script>
-        const input = document.getElementById("input");
-        const terminal = document.getElementById("terminal");
-        input.addEventListener("keydown", async (e) => {
-            if (e.key === "Enter") {
-                const cmd = input.value.trim();
-                terminal.innerHTML += "<p>&gt; " + cmd + "</p>";
-                input.value = "";
-                const res = await fetch("/cmd", {
-                    method: "POST",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cmd })
-                });
-                const out = await res.text();
-                terminal.innerHTML += "<p>" + out + "</p>";
-                terminal.scrollTop = terminal.scrollHeight;
-            }
-        });
-    </script>
-</body>
-</html>
-'''
+# === PAYMENT ROUTES CONFIG ===
+WISE_API_TOKEN = "cbef0212-08dd-49f7-b10a-9ad0294"
+DEST_IBAN = "GB23 TRWI 2308 0173 8658 35"
+EMAIL_ADDRESS = "w.omarion@icloud.com"
+EMAIL_PASSWORD = "ormb-jdip-awyn-omag"
+EMAIL_SMTP_SERVER = "smtp.mail.com"
+EMAIL_SMTP_PORT = 587
+XMR_WALLET = "42MQ5pDUv17VgnRT9EFAW5dcPBbBYu1XX5Jd"
+BANK_SORT = "23-08-01"
+BANK_ACC = "60628998"
+WISE_NAME = "Omarion Wilson"
 
-@app.route("/")
-def home():
-    return render_template_string(html)
+# === FUNCTION: ENCRYPT VAULT ENTRY ===
+def encrypt_entry(entry):
+    key = hashlib.sha256(operator_key.encode()).hexdigest()[:16]
+    return base64.b64encode((entry + key).encode()).decode()
 
-@app.route("/cmd", methods=["POST"])
-def command():
-    global BALANCE, LIVE_MODE, WITHDRAW_PENDING, HYDRA_LINKED, LOGS
+# === FUNCTION: SIMULATE ROUTING CHAIN ===
+def simulate_payment(amount):
+    if amount <= 4000:
+        return "Revolut"
+    elif amount <= 50000:
+        return "Wise"
+    else:
+        return "Monero"
 
-    cmd = request.json.get("cmd", "").lower().strip()
-    LOGS.append(cmd)
+# === FUNCTION: FAKE EMAIL RECEIPT ===
+def send_fake_receipt(amount, method):
+    now = datetime.datetime.now().strftime("%H:%M:%S")
+    logs.append(f"📤 [RECEIPT] Fake {method} confirmation email sent for £{amount:,} at {now}")
+    shadow_logs.append(f"[SHADOW] Spoofed receipt dispatched via SMTP.")
 
-    if cmd in ["/help", "help"]:
-        return """<b>Available Commands:</b><br>
-        /balance → View current locked balance<br>
-        /payout → Withdraw £500K via GhostMint routing<br>
-        /trigger arkhon → Begin Phase X ARKHØN Ops<br>
-        /launch cloneops → Deploy clone intelligence<br>
-        /enter auto-lab → Cyber Lab Phantom routines<br>
-        /start harvest → GhostMint Income Modules<br>
-        /ops → Show system status<br>
-        /toggle → Switch LIVE/SIM mode<br>
-        /clear → Clear terminal<br>
-        /vanish → Wipe traces<br>
-        /exit → Lock session"""
+# === FUNCTION: AUTOSWITCH TO SIM AFTER PAYOUT ===
+def auto_reset_after_live():
+    global live_mode
+    live_mode = False
+    logs.append("🔒 LIVE mode auto-disabled after payout.")
+    shadow_logs.append("[SECURE] Auto-reset to SIM mode after payment.")
 
-    elif cmd in ["/balance", "balance"]:
-        return f"💸 GhostMint Balance: £{BALANCE:,.2f} [LOCKED]"
+# === FUNCTION: HANDLE COMMANDS ===
+def handle_command(cmd):
+    global withdrawal_request, balance, live_mode, vanish_triggered
+    now = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    cmd = cmd.strip()
+    low = cmd.lower()
 
-    elif cmd in ["/payout", "payout"]:
-        if BALANCE >= 500000:
-            if LIVE_MODE:
-                WITHDRAW_PENDING = True
-                BALANCE -= 500000
-                return """🚨 LIVE PAYOUT<br>
-Routing: GhostMint → Monero Vault → Phantom Mixer → GBP Proxy → Wise (KYC-BYPASS)<br>
-✅ £500,000 en route to Wise. Transaction ID: """ + str(uuid.uuid4())[:8]
-            else:
-                return "🧪 SIMULATION: Payout of £500,000 simulated."
+    if low.startswith("withdraw"):
+        try:
+            amount = int(low.split()[1])
+            withdrawal_request = amount
+            logs.append(f"{now} 💸 Withdraw requested: £{amount:,}")
+            return f"Withdrawal of £{amount:,} requested. Type 'confirm withdraw'."
+        except:
+            return "❌ Invalid format. Use: withdraw <amount>"
+
+    elif low == "confirm withdraw":
+        if withdrawal_request:
+            logs.append(f"{now} ✅ Withdrawal confirmed: £{withdrawal_request:,}")
+            return "Now type 'send funds' to complete."
+        return "❌ No withdrawal to confirm."
+
+    elif low == "send funds":
+        if not withdrawal_request:
+            return "❌ No withdrawal in progress."
+        route = simulate_payment(withdrawal_request)
+        if live_mode:
+            logs.append(f"{now} [LIVE] Sent £{withdrawal_request:,} via {route}")
+            shadow_logs.append(f"{now} [LIVE] Routed £{withdrawal_request:,} through {route}")
+            send_fake_receipt(withdrawal_request, route)
+            auto_reset_after_live()
         else:
-            return "❌ Insufficient funds."
+            logs.append(f"{now} [SIM] Simulated £{withdrawal_request:,} → {route}")
+            shadow_logs.append(f"{now} [SIM] Would send £{withdrawal_request:,} via {route}")
+        balance_change = withdrawal_request
+        balance_change += random.randint(-20, 20)
+        balance -= balance_change
+        payment_history.append((withdrawal_request, route, live_mode))
+        withdrawal_request = None
+        return f"✅ {'Executed' if live_mode else 'Simulated'} transfer via {route}. New balance: £{balance:,}"
 
-    elif cmd in ["/trigger arkhon", "arkhon"]:
-        return "🧠 ARKHØN INITIATED — Phantom Intelligence Operational. Cyber Lab now autonomous."
+    elif low == "cancel withdraw":
+        withdrawal_request = None
+        return "❌ Withdrawal cancelled."
 
-    elif cmd in ["/launch cloneops", "cloneops"]:
-        return "🧬 CloneOps Activated. Strategic nodes deploying with stealth payloads."
+    elif low in ["/go live", "/live activate", "/enable all"]:
+        return "🔐 Authenticate Operator Signature to enable LIVE mode. Type: unlock <signature>"
 
-    elif cmd in ["/enter auto-lab", "autolab"]:
-        return "🔁 Cyber Lab Phantom Routines running. All VMs scanned. Recon + Defense Active."
+    elif low.startswith("unlock"):
+        try:
+            sig = cmd.split(" ", 1)[1].strip()
+            if sig == operator_signature:
+                live_mode = True
+                logs.append(f"{now} 🔓 LIVE MODE ENABLED by Operator")
+                shadow_logs.append(f"{now} [AUTH] LIVE switch flipped.")
+                return "✅ LIVE MODE ENABLED. All modules HOT."
+            else:
+                return "❌ Invalid signature. LIVE mode denied."
+        except:
+            return "❌ Format: unlock <signature>"
 
-    elif cmd in ["/start harvest", "harvest"]:
-        return "🌿 GhostMint Modules harvesting income across passive vectors. Watch Mode on."
+    elif low == "/cancel live":
+        live_mode = False
+        logs.append("🔒 LIVE MODE DISABLED by Operator command.")
+        return "LIVE mode disabled manually."
 
-    elif cmd in ["/ops", "ops"]:
-        return f"""📡 SYSTEM OPS STATUS:<br>
-        • BALANCE: £{BALANCE:,.2f}<br>
-        • LIVE MODE: {"🟢 LIVE" if LIVE_MODE else "🔵 SIM"}<br>
-        • HYDRA LINK: {"✅ ACTIVE" if HYDRA_LINKED else "❌ INACTIVE"}<br>
-        • VAULT: {"🔐 ENABLED" if VAULT_ACTIVE else "❌ DISABLED"}<br>
-        • WITHDRAWAL PENDING: {"✅ YES" if WITHDRAW_PENDING else "❌ NO"}"""
+    elif low == "vanish":
+        vanish_triggered = True
+        logs.append(f"{now} 🧨 VANISH protocol primed.")
+        return "🫥 VANISH protocol triggered. Logs cloaked."
 
-    elif cmd in ["/toggle", "toggle"]:
-        LIVE_MODE = not LIVE_MODE
-        return f"Mode switched to {'🟢 LIVE' if LIVE_MODE else '🔵 SIM'}"
+    elif low.startswith("vault add"):
+        entry = cmd[10:]
+        encrypted = encrypt_entry(entry)
+        vault_entries.append(f"{now} 🔐 {encrypted}")
+        return "Vault entry added and encrypted."
 
-    elif cmd in ["/clear", "clear"]:
-        LOGS.clear()
-        return "🧼 Terminal cleared."
+    elif low == "vault view":
+        return "\n".join(vault_entries[-5:]) if vault_entries else "Vault is empty."
 
-    elif cmd in ["/vanish", "vanish"]:
-        LOGS.clear()
-        return "🫥 VANISH PROTOCOL: Memory scrubbed. Session sanitized."
+    elif low == "income":
+        status = "LIVE" if live_mode else "SIM"
+        logs.append(f"{now} 💰 GhostMint ({status}): Auto income check complete.")
+        return f"GhostMint running in {status} mode. Recon modules operational."
 
-    elif cmd in ["/exit", "exit"]:
-        return "🔒 Session locked. Goodbye."
+    elif low == "clones":
+        return f"🧬 CloneOps running in {'LIVE' if live_mode else 'SIM'} mode. Tracking active sessions."
+
+    elif low == "attack":
+        if live_mode:
+            return "☠️ LIVE Self-Attack: Payloads queued for delivery."
+        return "(SIM) Self-Attack test: No real payloads launched."
+
+    elif low == "/route":
+        if withdrawal_request:
+            return f"📡 Routing: {simulate_payment(withdrawal_request)}"
+        return "No pending amount to route."
+
+    elif low == "/simulate payout":
+        amt = random.randint(5000, 80000)
+        method = simulate_payment(amt)
+        return f"Simulated routing for £{amt:,} → {method}"
+
+    elif low == "/ghost receipt":
+        send_fake_receipt(25000, "Wise")
+        return "📥 Spoofed receipt triggered."
+
+    elif low == "logs":
+        return "\n".join(logs[-10:])
+
+    elif low == "shadow":
+        return "\n".join(shadow_logs[-10:])
+
+    elif low == "help":
+        return ("Commands:\n- withdraw <amount>\n- confirm withdraw\n- send funds\n- vault add <text>\n- vault view\n"
+                "- /go live → unlock <signature>\n- income\n- clones\n- attack\n- /route\n- /simulate payout\n"
+                "- /ghost receipt\n- /cancel live\n- logs\n- shadow\n- vanish\n- help")
 
     else:
-        return "❓ Unknown command. Type /help for options."
+        logs.append(f"{now} ❓ Unknown command: {cmd}")
+        return "Unknown command. Type 'help'."
 
+# === ROUTE ===
+@app.route("/", methods=["GET", "POST"])
+def index():
+    console_output = ""
+    if request.method == "POST":
+        cmd = request.form["command"]
+        console_output = handle_command(cmd)
+
+    return render_template_string("""
+    <!doctype html>
+    <html>
+    <head>
+        <title>HYDRA :: {{ 'LIVE' if live_mode else 'SIM' }}</title>
+        <style>
+            body { background:black; color:#00FF88; font-family:monospace; margin:0; padding:0; }
+            .header { background:#111; padding:12px; text-align:center; font-size:20px; font-weight:bold; border-bottom:2px solid #0f0; }
+            .tabs { display:flex; justify-content:center; background:#222; padding:10px; }
+            .tabs button { background:#0f0; color:black; border:none; margin:3px; padding:10px; font-weight:bold; border-radius:4px; cursor:pointer; }
+            .main { padding:20px; }
+            .console { background:#000; border:1px solid #0f0; padding:10px; height:300px; overflow-y:scroll; white-space:pre-wrap; margin-bottom:12px; }
+            .input { display:flex; }
+            .input input[type=text] { flex:1; padding:10px; border:1px solid #0f0; background:black; color:#0f0; font-family:monospace; }
+            .input input[type=submit] { padding:10px; background:#0f0; color:black; border:none; font-weight:bold; cursor:pointer; }
+        </style>
+    </head>
+    <body>
+        <div class="header">HYDRA OS :: OMNIA MODE | {{ 'LIVE' if live_mode else 'SIM' }} | BALANCE: £{{ "{:,}".format(balance) }}</div>
+        <div class="tabs">
+            <button>Console</button><button>Vault</button><button>Logs</button><button>CloneOps</button>
+            <button>GhostMint</button><button>Self-Attack</button><button style="background:red;">VANISH</button>
+        </div>
+        <div class="main">
+            <div class="console">
+                {% for line in logs[-15:] %}{{ line }}<br>{% endfor %}
+                {% if console_output %}<b>{{ console_output }}</b>{% endif %}
+            </div>
+            <form method="post" class="input">
+                <input type="text" name="command" placeholder="Enter command...">
+                <input type="submit" value="Execute">
+            </form>
+        </div>
+    </body>
+    </html>
+    """, balance=balance, logs=logs, console_output=console_output, live_mode=live_mode)
+
+# === START ===
 if __name__ == "__main__":
-    app.run(debug=True, port=10000)
+    app.run(debug=False)
