@@ -1,35 +1,28 @@
-from flask import Flask, request, jsonify
+from flask import Flask, send_from_directory, request, jsonify
 import os
-import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=".")
 
-SECRET_TRIGGER = "2498"
+@app.route("/")
+def serve_index():
+    return send_from_directory(".", "index.html")
 
-@app.route('/trigger_payout', methods=['POST'])
-def payout():
-    code = request.args.get('code')
-    if code != SECRET_TRIGGER:
-        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+@app.route("/trigger_payout", methods=["POST"])
+def trigger_payout():
+    data = request.json
+    print("[PAYOUT TRIGGERED]", data)
+    return jsonify({"status": "success", "message": "Live backend received payout trigger"})
 
-    # ✅ Step 1: Log Payout (ghost trace)
-    with open("payout_log.txt", "a") as log:
-        log.write(f"[{datetime.datetime.now()}] Payout triggered\n")
+@app.route("/ghostmint_inject", methods=["POST"])
+def ghostmint_inject():
+    print("[GHOSTMINT] Passive injection detected")
+    return jsonify({"status": "ok", "message": "GhostMint logic acknowledged"})
 
-    # ✅ Step 2: Trigger Crypto Mixer Script (example stub)
-    os.system("python3 run_mixer.py")
+@app.route("/vanish_logs", methods=["POST"])
+def vanish_logs():
+    print("[VANISH] Logs wiped (simulated)")
+    return jsonify({"status": "vanished"})
 
-    # ✅ Step 3: Swap to GBP and send to Wise
-    os.system("python3 send_to_wise.py")
-
-    # ✅ Step 4: Wipe logs or reroute after payout
-    os.system("sh vanish.sh")
-
-    return jsonify({"status": "success", "message": "Payout executed"}), 200
-
-@app.route('/ghostmint_inject', methods=['POST'])
-def ghostmint():
-    # Passive income simulation — add value to log or DB
-    with open("ghostmint_balance.txt", "a") as log:
-        log.write(f"[{datetime.datetime.now()}] +250,000\n")
-    return jsonify({"status": "ok"})
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
