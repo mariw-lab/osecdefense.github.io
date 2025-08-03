@@ -53,10 +53,11 @@ Hydra LINK established ✅
 <span style="color:#00ffcc">[ACCESS GRANTED]</span> Operator <b>@osecdefense</b> authenticated
 Welcome to the oSec Defense Terminal.
 Type <span style="color: #00ffff">'help'</span> to begin.
-</pre>
+      </pre>
     </div>
     <form onsubmit="return runCommand();">
-      <span style="color:#00ffcc">x0secdefense&gt; </span><input type="text" id="cmdInput" autofocus autocomplete="off">
+      <span style="color:#00ffcc">x0secdefense&gt; </span>
+      <input type="text" id="cmdInput" autofocus autocomplete="off" />
     </form>
   </div>
   <button id="logBtn" onclick="downloadLog()">Download Logs</button>
@@ -68,7 +69,7 @@ Type <span style="color: #00ffff">'help'</span> to begin.
     let histIndex = -1;
     let balance = 3200000;
 
-    document.addEventListener('click', () => { input.focus(); });
+    document.addEventListener('click', () => input.focus());
 
     input.addEventListener('keydown', function(e) {
       if (e.key === 'ArrowUp') {
@@ -87,9 +88,7 @@ Type <span style="color: #00ffff">'help'</span> to begin.
       if (command) {
         history.push(command);
         histIndex = history.length;
-        appendTyped(`x0secdefense> ${command}\n`, () => {
-          handleCommand(command);
-        });
+        appendTyped(`x0secdefense> ${command}\n`, () => handleCommand(command));
       }
       input.value = "";
       return false;
@@ -114,28 +113,31 @@ Type <span style="color: #00ffff">'help'</span> to begin.
           break;
 
         case "payout":
-  const code = prompt("🔐 Enter 4-digit operator trigger:");
-  if (code === "2498") {
-    result = `<span style="color:#00ff88">[🔓] Payout code verified.</span><br>[🔄] Routing HydraChain payouts...<br> → Wise Business (GBP Transfer): <b>$${(balance * 0.4).toLocaleString("en-US")}</b><br> → Cold Storage (XMR via Mixer): <b>$${(balance * 0.6).toLocaleString("en-US")}</b><br><span style="color:#00ff88">[✅] Routing instructions complete.</span>`;
-    balance = 0;
-
-    // LIVE CALL TO BACKEND
-    fetch("https://x0sec-admin.onrender.com/trigger_payout?code=2498", {
-      method: "POST"
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log("[Hydra Admin] LIVE payout backend hit:", data);
-    })
-    .catch(error => {
-      console.error("[Hydra Admin] LIVE backend error:", error);
-    });
-
-  } else {
-    result = "<span style='color:#ff4444'>[❌] Invalid trigger. Access denied.</span>";
-  }
-  break;
-
+          const code = prompt("🔐 Enter 4-digit operator trigger:");
+          if (code === "2498") {
+            result = `<span style="color:#00ff88">[🔓] Payout code verified.</span>
+[🔄] Routing HydraChain payouts...
+→ 40% → Wise Business (GBP Transfer): <b>$${(balance * 0.4).toLocaleString("en-US")}</b>
+→ 60% → Cold Storage (XMR via Mixer): <b>$${(balance * 0.6).toLocaleString("en-US")}</b>
+<span style="color:#00ff88">[✅] Routing instructions complete.</span>`;
+            fetch("https://x0sec-admin.onrender.com/api/trigger_payout", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                gbp_amount: (balance * 0.4),
+                xmr_amount: (balance * 0.6),
+                timestamp: new Date().toISOString()
+              })
+            }).catch(err => {
+              appendTyped(`[⚠️] Backend error: ${err.message}\n`);
+            });
+            balance = 0;
+          } else {
+            result = "<span style='color:#ff4444'>[❌] Invalid trigger. Access denied.</span>";
+          }
+          break;
 
         case "status":
           result = "Split Config: <span style='color:#00ffff'>40%</span> Wise GBP • <span style='color:#00ffff'>60%</span> Cold Storage (XMR)";
@@ -143,7 +145,11 @@ Type <span style="color: #00ffff">'help'</span> to begin.
 
         case "vanish":
           result = "<span style='color:#ff0077'>[🧼] VANISH Protocol armed. Logs wiping...</span>";
-          // Optional: Add log clearing logic
+          fetch("https://x0sec-admin.onrender.com/api/vanish_logs", {
+            method: "POST"
+          }).catch(err => {
+            appendTyped(`[⚠️] Vanish API error: ${err.message}\n`);
+          });
           break;
 
         case "reroute":
@@ -174,7 +180,8 @@ Type <span style="color: #00ffff">'help'</span> to begin.
       }, 10);
     }
 
-    function downloadLog() {
+
+   function downloadLog() {
       const text = output.innerText;
       const blob = new Blob([text], { type: "text/plain" });
       const link = document.createElement("a");
@@ -183,17 +190,18 @@ Type <span style="color: #00ffff">'help'</span> to begin.
       link.click();
     }
 
-    // 💸 Passive injection engine (LIVE-READY if backend tied)
+    // Passive injection engine (LIVE-READY)
     setInterval(() => {
       if (balance > 0) {
         balance += 250000;
         appendTyped("[GhostMint 💸] Injected $250,000.00\n\n");
-
-        // 🔗 Optional: call backend to reflect injection
-        // fetch("https://yourdomain.com/ghostmint_inject", { method: "POST" })
-
+        fetch("https://x0sec-admin.onrender.com/api/ghostmint_inject", {
+          method: "POST"
+        }).catch(err => {
+          appendTyped(`[⚠️] GhostMint error: ${err.message}\n`);
+        });
       }
-    }, 60000); // Every 1 min, adjustable
+    }, 60000); // Every 1 min (adjustable)
   </script>
 </body>
 </html>
