@@ -2,153 +2,190 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>oSec Defense Nexus</title>
+  <title>oSec Defense Terminal</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: black;
+    body {
+      background-color: #011627;
       color: #00ffcc;
-      font-family: 'Courier New', Courier, monospace;
-      height: 100%;
-      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      margin: 0;
     }
     #terminal {
-      padding: 20px;
-      height: 100%;
+      width: 100%;
+      height: 90vh;
       overflow-y: auto;
-      white-space: pre-wrap;
-      box-sizing: border-box;
-      background: linear-gradient(135deg, #001111, #000000);
-    }
-    .input-line {
-      display: flex;
-      margin-top: 10px;
-    }
-    .prompt {
-      color: #00ffcc;
-    }
-    input {
-      background: black;
-      color: #00ffcc;
+      background-color: #011627;
+      padding: 20px;
       border: none;
       outline: none;
-      font: inherit;
-      width: 100%;
     }
-    .startup {
-      color: #00ffff;
-      animation: flicker 2s infinite alternate;
+    input[type="text"] {
+      background: transparent;
+      border: none;
+      color: #00ffcc;
+      font-family: inherit;
+      font-size: 16px;
+      width: 90%;
     }
-    @keyframes flicker {
-      from { opacity: 1; }
-      to { opacity: 0.6; }
-    }
-    .hidden {
-      display: none;
-    }
-    .vanish-toggle {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      font-size: 12px;
-      color: #ccc;
+    #logBtn {
+      margin-top: 10px;
+      background-color: #00ffcc;
+      color: #011627;
+      border: none;
+      padding: 6px 12px;
       cursor: pointer;
+      font-weight: bold;
+    }
+    #liveModeToggle {
+      margin-left: 10px;
+      transform: scale(1.5);
+    }
+    label {
+      font-size: 14px;
+      color: #00ffff;
     }
   </style>
 </head>
 <body>
-  <div class="vanish-toggle" onclick="toggleVanish()">VANISH MODE: <span id="vanish-status">OFF</span></div>
-  <div id="terminal">
-    <div class="startup">Initializing oSec Defense Core...</div>
-    <div class="startup">Injecting GhostMint Engine...</div>
-    <div class="startup">Hydra LINK established ✅</div>
-    <div class="startup">[ACCESS GRANTED] Operator x0secdefense authenticated</div>
-    <div class="startup">Welcome to the oSec Defense Terminal. Type 'help' to begin.</div>
-    <div class="input-line"><span class="prompt">x0secdefense&gt;</span><input id="cmd" autofocus onkeydown="handleCommand(event)"></div>
+
+<div id="terminal">
+  <div id="output">
+    <pre>
+Initializing oSec Defense Core...
+Injecting GhostMint Engine...
+
+Hydra LINK established ✅
+
+<span style="color:#00ffcc">[ACCESS GRANTED]</span> Operator <b>@osecdefense</b> authenticated
+
+Welcome to the oSec Defense Terminal. Type <span style="color: #00ffff">'help'</span> to begin.
+
+> </pre>
   </div>
+  <form onsubmit="return runCommand();">
+    <span style="color:#00ffcc">x0secdefense&gt; </span><input type="text" id="cmdInput" autofocus autocomplete="off">
+  </form>
+</div>
 
-  <script>
-    const terminal = document.getElementById('terminal');
-    const input = document.getElementById('cmd');
-    const vanishStatus = document.getElementById('vanish-status');
-    let vanishMode = false;
+<label><input type="checkbox" id="liveModeToggle"> LIVE Mode</label>
+<button id="logBtn" onclick="downloadLog()">Download Logs</button>
 
-    function handleCommand(e) {
-      if (e.key === 'Enter') {
-        const val = input.value.trim();
-        const out = document.createElement('div');
-        out.textContent = `> ${val}`;
-        terminal.insertBefore(out, input.parentElement);
+<script>
+  const output = document.getElementById("output");
+  const input = document.getElementById("cmdInput");
+  let history = [];
+  let histIndex = -1;
 
-        let response = '';
-        switch (val.toLowerCase()) {
-          case 'help':
-            response = `
-Available Commands:
-- help: Show this list
-- status: System health check
-- ghostmint: Trigger income node scan
-- vanish: Toggle VANISH protocol
-- clear: Clear terminal
-- submit: Send encrypted payload
-- live: Toggle LIVE/SIM Mode
-- exit: Lockdown interface`;
-            break;
-          case 'status':
-            response = '[OK] All systems operational. Defense net active.';
-            break;
-          case 'ghostmint':
-            response = '[GHOSTMINT] Running recon sweep... passive income signals detected.';
-            break;
-          case 'vanish':
-            toggleVanish();
-            response = `[VANISH] Mode now: ${vanishMode ? 'ENABLED' : 'DISABLED'}`;
-            break;
-          case 'clear':
-            clearTerminal();
-            return;
-          case 'submit':
-            response = '[SUBMIT] Form payload sent (⚠ link handler pending)';
-            break;
-          case 'live':
-            response = '[MODE] LIVE mode activated — all actions are real.';
-            break;
-          case 'exit':
-            response = '[LOCKDOWN] Session ended. oSecBot standing by.';
-            break;
-          default:
-            response = '[ERROR] Unknown command. Type "help"';
+  // Focus on input even after clicking outside
+  document.addEventListener('click', () => {
+    input.focus();
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowUp') {
+      if (histIndex > 0) histIndex--;
+      input.value = history[histIndex] || '';
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown') {
+      if (histIndex < history.length - 1) histIndex++;
+      input.value = history[histIndex] || '';
+      e.preventDefault();
+    }
+  });
+
+  function runCommand() {
+    const command = input.value.trim();
+    const liveMode = document.getElementById('liveModeToggle').checked;
+    if (command) {
+      history.push(command);
+      histIndex = history.length;
+    }
+
+    appendTyped(`x0secdefense> ${command}\n`, () => {
+      handleCommand(command, liveMode);
+    });
+
+    input.value = "";
+    return false;
+  }
+
+  function handleCommand(command, liveMode) {
+    let result = "";
+
+    switch (command.toLowerCase()) {
+      case "help":
+        result = `
+<span style="color:#00ffff">Available Commands:</span>
+- help                → show this menu
+- balance             → show earnings balance
+- payout              → trigger HydraChain Final
+- vanish              → engage stealth wipe (offline)
+- reroute             → re-initiate mixer logic
+- status              → check payout split status
+- exit                → shut down session`;
+        break;
+      case "balance":
+        result = `<span style="color:#00ff88">💰 Current Earnings Balance:</span> $3,200,000.00`;
+        break;
+      case "payout":
+        const code = prompt("🔐 Enter 4-digit operator trigger:");
+        if (code === "2498") {
+          if (liveMode) {
+            result = `<span style="color:#00ff88">[🔓] Payout code verified.</span>
+[🔄] Routing HydraChain payouts...
+  → 40% → Wise Business (GBP Transfer): <b>$1,280,000.00</b>
+  → 60% → Cold Storage (XMR via Mixer): <b>$1,920,000.00</b>
+<span style="color:#00ff88">[✅] Routing instructions complete.</span>`;
+          } else {
+            result = `<span style="color:#ffaa00">[SIMULATION MODE]</span> Payout simulated successfully. No real funds moved.`;
+          }
+        } else {
+          result = `<span style="color:#ff4444">[❌] Invalid trigger. Access denied.</span>`;
         }
+        break;
+      case "status":
+        result = `Split Config: <span style="color:#00ffff">40%</span> Wise GBP • <span style="color:#00ffff">60%</span> Cold Storage (XMR)`;
+        break;
+      case "vanish":
+        result = `<span style="color:#ff0077">[🧼] VANISH Protocol armed. Logs wiping...</span>`;
+        break;
+      case "reroute":
+        result = `[🔄] Mixer logic reinitialized. Stealth circuits online.`;
+        break;
+      case "exit":
+        result = `<span style="color:#888888">[🔒] Session terminated. Goodbye, Operator.</span>`;
+        break;
+      default:
+        result = `<span style="color:#ff4444">[ERROR]</span> Unknown command: '${command}' — try '<span style="color:#00ffff">help</span>'`;
+    }
 
-        const r = document.createElement('div');
-        r.textContent = response;
-        terminal.insertBefore(r, input.parentElement);
-        input.value = '';
-        scrollToBottom();
+    appendTyped(result + "\n\n");
+  }
+
+  function appendTyped(text, callback) {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        output.innerHTML += text.charAt(i);
+        output.scrollTop = output.scrollHeight;
+        i++;
+      } else {
+        clearInterval(interval);
+        if (callback) callback();
       }
-    }
+    }, 10); // typing speed
+  }
 
-    function toggleVanish() {
-      vanishMode = !vanishMode;
-      vanishStatus.textContent = vanishMode ? 'ON' : 'OFF';
-    }
+  function downloadLog() {
+    const text = output.innerText;
+    const blob = new Blob([text], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "osec_terminal_log.txt";
+    link.click();
+  }
+</script>
 
-    function clearTerminal() {
-      const all = Array.from(terminal.children);
-      all.forEach(el => {
-        if (!el.classList.contains('input-line') && !el.classList.contains('vanish-toggle')) {
-          terminal.removeChild(el);
-        }
-      });
-    }
-
-    function scrollToBottom() {
-      terminal.scrollTop = terminal.scrollHeight;
-    }
-  </script>
 </body>
 </html>
-
-Final deployment of oSec Defense Nexus
