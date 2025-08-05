@@ -1,207 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>oSec Defense Terminal</title>
-  <style>
-    body {
-      background-color: #011627;
-      color: #00ffcc;
-      font-family: 'Courier New', monospace;
-      padding: 20px;
-      margin: 0;
-    }
-    #terminal {
-      width: 100%;
-      height: 90vh;
-      overflow-y: auto;
-      background-color: #011627;
-      padding: 20px;
-      border: none;
-      outline: none;
-    }
-    input[type="text"] {
-      background: transparent;
-      border: none;
-      color: #00ffcc;
-      font-family: inherit;
-      font-size: 16px;
-      width: 90%;
-    }
-    #logBtn {
-      margin-top: 10px;
-      background-color: #00ffcc;
-      color: #011627;
-      border: none;
-      padding: 6px 12px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    label {
-      font-size: 14px;
-      color: #00ffff;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>OSEC Defense Ltd</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="hydra_icon.png">
 </head>
 <body>
-  <div id="terminal">
-    <div id="output">
-      <pre>
-Initializing oSec Defense Core...
-Injecting GhostMint Engine...
-Hydra LINK established ✅
-<span style="color:#00ffcc">[ACCESS GRANTED]</span> Operator <b>@osecdefense</b> authenticated
-Welcome to the oSec Defense Terminal.
-Type <span style="color: #00ffff">'help'</span> to begin.
-      </pre>
-    </div>
-    <form onsubmit="return runCommand();">
-      <span style="color:#00ffcc">x0secdefense&gt; </span>
-      <input type="text" id="cmdInput" autofocus autocomplete="off" />
-    </form>
-  </div>
-  <button id="logBtn" onclick="downloadLog()">Download Logs</button>
+  <header>
+    <h1>OSEC Defense Ltd</h1>
+    <nav>
+      <a href="#about">About</a>
+      <a href="#legal">Legal Docs</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
 
-  <script>
-    const output = document.getElementById("output");
-    const input = document.getElementById("cmdInput");
-    let history = [];
-    let histIndex = -1;
-    let balance = 3200000;
+  <main>
+    <section id="about">
+      <h2>About Us</h2>
+      <p>
+        OSEC Defense Ltd secures high-availability payment infrastructure and automation for
+        international clients. We specialize in hardened systems architecture, zero-trust integrations,
+        and stealth-grade cybersecurity tailored for modern financial operations.
+      </p>
+    </section>
 
-    document.addEventListener('click', () => input.focus());
+    <section id="legal">
+      <h2>Legal Documents</h2>
+      <ul>
+        <li>
+          <a href="Certificate_of_Incorporation.pdf" target="_blank">
+            Certificate of Incorporation
+          </a>
+        </li>
+        <li>
+          <a href="Memorandum_of_Association.pdf" target="_blank">
+            Memorandum of Association
+          </a>
+        </li>
+      </ul>
+    </section>
 
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'ArrowUp') {
-        if (histIndex > 0) histIndex--;
-        input.value = history[histIndex] || '';
-        e.preventDefault();
-      } else if (e.key === 'ArrowDown') {
-        if (histIndex < history.length - 1) histIndex++;
-        input.value = history[histIndex] || '';
-        e.preventDefault();
-      }
-    });
+    <section id="dashboard">
+      <h2>Admin Dashboard & App</h2>
+      <p>Your live terminal UI for transaction control:</p>
+      <p>
+        <a href="https://x0sec-admin.onrender.com" class="btn" target="_blank">
+          Launch Dashboard
+        </a>
+      </p>
+    </section>
 
-    function runCommand() {
-      const command = input.value.trim();
-      if (command) {
-        history.push(command);
-        histIndex = history.length;
-        appendTyped(`x0secdefense> ${command}\n`, () => handleCommand(command));
-      }
-      input.value = "";
-      return false;
-    }
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>
+        Email: <a href="mailto:info@x0sec-admin.onrender.com">info@x0sec-admin.onrender.com</a><br>
+        Registered in England &amp; Wales | Company No: 16628521
+      </p>
+    </section>
+  </main>
 
-    function handleCommand(command) {
-      let result = "";
-      switch (command.toLowerCase()) {
-        case "help":
-          result = `<span style="color:#00ffff">Available Commands:</span>
-• help → show this menu
-• balance → show earnings balance
-• payout → trigger HydraChain Final
-• vanish → engage stealth wipe (offline)
-• reroute → re-initiate mixer logic
-• status → check payout split status
-• exit → shut down session`;
-          break;
-
-        case "balance":
-          result = `<span style='color:#00ff88'>💰 Current Earnings Balance:</span> $${balance.toLocaleString("en-US")}.00`;
-          break;
-
-        case "payout":
-          const code = prompt("🔐 Enter 4-digit operator trigger:");
-          if (code === "2498") {
-            result = `<span style="color:#00ff88">[🔓] Payout code verified.</span>
-[🔄] Routing HydraChain payouts...
-→ 40% → Wise Business (GBP Transfer): <b>$${(balance * 0.4).toLocaleString("en-US")}</b>
-→ 60% → Cold Storage (XMR via Mixer): <b>$${(balance * 0.6).toLocaleString("en-US")}</b>
-<span style="color:#00ff88">[✅] Routing instructions complete.</span>`;
-            fetch("https://x0sec-admin.onrender.com/api/trigger_payout", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                gbp_amount: (balance * 0.4),
-                xmr_amount: (balance * 0.6),
-                timestamp: new Date().toISOString()
-              })
-            }).catch(err => {
-              appendTyped(`[⚠️] Backend error: ${err.message}\n`);
-            });
-            balance = 0;
-          } else {
-            result = "<span style='color:#ff4444'>[❌] Invalid trigger. Access denied.</span>";
-          }
-          break;
-
-        case "status":
-          result = "Split Config: <span style='color:#00ffff'>40%</span> Wise GBP • <span style='color:#00ffff'>60%</span> Cold Storage (XMR)";
-          break;
-
-        case "vanish":
-          result = "<span style='color:#ff0077'>[🧼] VANISH Protocol armed. Logs wiping...</span>";
-          fetch("https://x0sec-admin.onrender.com/api/vanish_logs", {
-            method: "POST"
-          }).catch(err => {
-            appendTyped(`[⚠️] Vanish API error: ${err.message}\n`);
-          });
-          break;
-
-        case "reroute":
-          result = "[🔄] Mixer logic reinitialized. Stealth circuits online.";
-          break;
-
-        case "exit":
-          result = "<span style='color:#888888'>[🔒] Session terminated. Goodbye, Operator.</span>";
-          break;
-
-        default:
-          result = `<span style='color:#ff4444'>[ERROR]</span> Unknown command: '${command}' — try '<span style="color:#00ffff">help</span>'`;
-      }
-      appendTyped(result + "\n\n");
-    }
-
-    function appendTyped(text, callback) {
-      let i = 0;
-      const interval = setInterval(() => {
-        if (i < text.length) {
-          output.innerHTML += text.charAt(i);
-          output.scrollTop = output.scrollHeight;
-          i++;
-        } else {
-          clearInterval(interval);
-          if (callback) callback();
-        }
-      }, 10);
-    }
-
-
-   function downloadLog() {
-      const text = output.innerText;
-      const blob = new Blob([text], { type: "text/plain" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "osec_terminal_log.txt";
-      link.click();
-    }
-
-    // Passive injection engine (LIVE-READY)
-    setInterval(() => {
-      if (balance > 0) {
-        balance += 250000;
-        appendTyped("[GhostMint 💸] Injected $250,000.00\n\n");
-        fetch("https://x0sec-admin.onrender.com/api/ghostmint_inject", {
-          method: "POST"
-        }).catch(err => {
-          appendTyped(`[⚠️] GhostMint error: ${err.message}\n`);
-        });
-      }
-    }, 60000); // Every 1 min (adjustable)
-  </script>
+  <footer>
+    <small>© 2025 OSEC Defense Ltd. All rights reserved.</small>
+  </footer>
 </body>
 </html>
