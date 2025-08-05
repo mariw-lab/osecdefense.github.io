@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: x0Sec_Admin
-    env: python
-    buildCommand: ""
-    startCommand: "python app.py"
-    plan: free
-    repo: https://github.com/YOUR_USERNAME/YOUR_REPO
-    branch: main
