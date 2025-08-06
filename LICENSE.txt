@@ -1,0 +1,7 @@
+MIT License
+
+Copyright (c) 2025 Hydra
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation...
+
+[trimmed for brevity — you can paste full MIT or other license if preferred]
