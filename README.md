@@ -1,13 +1,16 @@
-# Hydra Systems — Public Interface
+# OSEC DEFENSE LTD
+Cybersecurity automation & managed threat defense.
 
-Welcome to the public face of Hydra.  
-This repository contains legal documentation, open-source tools, and the official site used to interface with external partners, clients, and the public.
+**Website**: https://x0secdefense.xyz
 
-## Sections
+## What we do
+- Security Automation (SOAR playbooks, alert triage, auto-remediation)
+- Managed Detection & Response (24×7 monitoring, threat hunting, IR)
+- Advisory & Readiness (architecture, tabletop exercises, roadmaps)
 
-- `/docs/` — Legal structure and contact info  
-- `/tools/` — Open-source utility scripts  
-- `/website/` — The official Hydra public site  
-- `/guide/` — Instructions on using the open modules  
+## Company
+- Incorporated in England & Wales (No. 16628521)
+- Docs: [/docs/Certificate_of_Incorporation.pdf](docs/Certificate_of_Incorporation.pdf), [/docs/Memorandum_of_Association.pdf](docs/Memorandum_of_Association.pdf)
 
-> Note: No private logic, stealth systems, or income generation components are in this repo. All live systems are kept separate.
+## Legal
+- [Privacy](privacy.html) • [Terms](terms.html)
